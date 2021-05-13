@@ -1,0 +1,88 @@
+library(tidyverse)
+
+gps <- read_csv("data/gps.csv")
+gym <- read_csv("data/gym.csv")
+injury <- read_csv("data/injury.csv")
+wellness <- read_csv("data/wellness.csv")
+
+gym <- gym%>%
+  rename(volume_load = "Volume Load") %>%
+  group_by(UUID, Date) %>%
+  summarise(volume_load = sum(volume_load, na.rm = TRUE)) %>%
+  ungroup
+
+joined_data <- full_join(gps, gym, by = c("Date", "UUID"))
+
+joined_data <- full_join(joined_data, wellness, by = c("Date", "UUID"))
+
+joined_data <- full_join(joined_data, injury, by = c("Date", "UUID"))
+
+names(joined_data) <- str_replace_all(string = names(joined_data),
+                                     pattern = " ",
+                                     replacement = "_")
+
+names(joined_data) <- str_replace_all(string = names(joined_data),
+                                      pattern = "[()-]",
+                                      replacement = "")
+
+names(joined_data) <- str_replace_all(string = names(joined_data),
+                                      pattern = "Session_",
+                                      replacement = "")
+
+names(joined_data) <- tolower(names(joined_data))
+
+min_date <- as.Date(min(joined_data$date))
+max_date <- as.Date(max(joined_data$date))
+
+days <- seq.Date(from = min_date, to = max_date, by = "days")
+
+joined_data <- joined_data %>%
+  mutate(date = as.Date(date)) %>%
+  group_by(uuid) %>%
+  complete(date = days) %>%
+  ungroup()
+
+joined_data <- joined_data %>%
+  group_by(uuid) %>%
+  fill(position, .direction = "downup") %>%
+  ungroup()
+
+unique(joined_data$sleep_quality)
+unique(joined_data$muscle_soreness)
+
+joined_data <- joined_data %>%
+  mutate(sleep_quality = case_when(
+    sleep_quality == "Very, very bad" ~1,
+    sleep_quality == "Very bad" ~2, 
+    sleep_quality == "Bad" ~3, 
+    sleep_quality == "Average" ~4, 
+    sleep_quality == "Good" ~5, 
+    sleep_quality == "Very good" ~6, 
+    sleep_quality == "Very, very good" ~7))
+
+joined_data <- joined_data %>%
+  mutate(across(c(fatigue, stress, muscle_soreness),
+                ~ case_when(
+                  . == "Very, very high" ~1, 
+                  . == "Very high" ~2, 
+                  . == "High" ~3,
+                  . == "Average" ~4, 
+                  . == "Low" ~5, 
+                  . == "Very low" ~6, 
+                  . == "Very very low" ~7)))
+
+joined_data <- joined_data %>%
+  mutate(total_wellness = sleep_quality + muscle_soreness + fatigue + stress)
+
+joined_data <- joined_data %>%
+  replace_na(replace = list(duration = 0, distance = 0, high_speed_distance = 0, very_high_speed_distance = 0, accel_load = 0, accels_b23 = 0, accels_b3 = 0, average_speed = 0, max_speed = 0, volume_load =0))
+
+library(imputeTS)
+
+joined_data <- joined_data %>%
+  group_by(uuid) %>%
+  mutate(across(c(sleep_quality, fatigue, stress, muscle_soreness, total_wellness), 
+                ~ na_ma(.x, k = 2, weighting = "exponential"))) %>%
+  ungroup()
+
+write_csv(joined_data, file = "data/combined-data_tidy.csv")

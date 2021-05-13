@@ -1,0 +1,139 @@
+library(tidyverse)
+
+dat <- read_csv("Data Analysis/Week 11/1991-2020_afl_team_data_tidy.csv")
+
+gg <- dat %>%
+  ggplot(aes(x = match_outcome, y = Home.score, colour = match_outcome)) +
+  geom_boxplot()
+
+gg <- gg +
+  labs(title = "Point distribution when home teams win, lose and draw", subtitle = "Teams tend to win when they score more than 100 points", caption = "Data sourced from Fitzroy package")
+
+gg <- gg + 
+  labs(x = "Match Outcome", y = "Poinst scored when playing at home")
+
+gg <- gg +
+  labs(colour = "Match Outcome")
+
+#when looking to fill the boxplots using the match_outcome, use the aes fill(), when using the match_outcome to colour the boxplots use colour = ()#
+dat %>%
+  ggplot(aes(x = match_outcome, y = Home.score, fill = match_outcome)) +
+  geom_boxplot() +
+  labs(fill = "Match Outcome")
+
+gg <- dat %>%
+  ggplot(aes(X = match_outcome, y = Home.score, colour = match_outcome)) +
+  geom_boxplot() +
+  labs(title = "Point distribution when home teams win, lose and draw", subtitle = "Teams tend to win when they score more than 100 points", caption = "Data sourced from the Fitzroy package", x = "Match Outcome", y = "Points score when playing at home", colour = "Match Outcome")
+
+dat %>%
+  ggplot(aes(x = Marks.Inside.50, y = Goals)) +
+  geom_point(alpha = 0.6)
+
+dat_filtered <- dat %>%
+  filter(Marks.Inside.50 > 0)
+
+gg <- dat_filtered %>%
+  ggplot(aes(x = Marks.Inside.50, y = Goals)) +
+  geom_point(alpha = 0.6)
+
+gg +
+  scale_x_continuous(limits = c(0,60)) +
+  scale_y_continuous(limits = c(0, 60))
+
+gg <- gg +
+  scale_x_continuous(limits = c(0, 60), breaks = c(0, 10, 20, 30, 40, 50, 60)) +
+  scale_y_continuous(limits = c(0, 60), breaks = c(0, 10, 20, 30, 40, 50, 60))
+
+gg <- gg +
+  scale_x_continuous(limits = c(0, 60),
+                     breaks = seq(0, 60, by = 10)) +
+  scale_y_continuous(limits = c(0, 60),
+                     breaks = seq(0, 60, by = 10))
+
+gg <- ggplot(data=dat) +
+  geom_histogram(aes(x = Marks), fill = "deepskyblue", colour = "deeppink")
+
+gg <- dat_filtered %>%
+  ggplot() +
+  geom_point(aes(x = Marks.Inside.50, y = Goals, colour = Goals))
+
+gg <- dat_filtered %>%
+  ggplot() +
+  geom_point(aes(x = Marks.Inside.50, y = Goals, colour = Goals)) +
+  scale_colour_gradient(low = "green", high = "red")
+
+ggplot(data = dat) +
+  geom_boxplot(aes(x = match_outcome, y = Home.score, colour = match_outcome))
+
+gg <- ggplot(data = dat) +
+  geom_boxplot(aes(x = match_outcome, y = Home.score, colour = match_outcome)) +
+  scale_colour_manual(values = c("dodgerblue", "aquamarine3", "darkorchid"))
+
+gg <- ggplot(data = dat) +
+  geom_boxplot(aes(x = match_outcome, y = Home.score, fill = match_outcome)) +
+  scale_fill_manual(values = c("dodgerblue", "aquamarine3", "darkorchid"))
+
+pretty_colours <- c("dodgerblue", "aquamarine3", "darkorchid")
+
+gg <- ggplot(data = dat) +
+  geom_boxplot(aes(x = match_outcome, y = Home.score, fill = match_outcome)) +
+  scale_fill_manual(values = pretty_colours)
+
+team_averages <- dat %>%
+  filter(Season == 2019) %>%
+  group_by(Home.team) %>%
+  summarise(across(c(Goals, Marks.Inside.50), mean))
+
+head(team_averages)
+
+gg <- ggplot(data = team_averages, aes(x = Marks.Inside.50, y = Goals)) +
+  geom_point()
+
+gg+
+  geom_text(aes(label = Home.team))
+
+gg +
+  geom_text(aes(label = Home.team), nudge_y = 0.25, nudge_x = 0.25)
+
+gg +
+  geom_text_repel(aes(label = Home.team), colour = "navy")
+
+gg <- dat_filtered %>%
+  ggplot() +
+  geom_point(aes(x = Marks.Inside.50, y = Goals, colour = Goals)) +
+  scale_colour_gradient(low = "green", high = "red") +
+  theme_classic()
+xplot() +
+  ggtitle("Point distribution when home teams win, lose and draw") +
+  xlab("Match Outcome") +
+  ylab("Points scored when playing at home") +
+gg <- dat %>%
+  ggplot(aes(x = match_outcome, y = Home.score, colour = match_outcome)) +
+  geom_boxplot() +
+  ggtitle("Point distribution when home teams win, lose and draw") +
+  xlab("Match Outcome") +
+  ylab("Points scored when playing at home") +
+  theme_classic() +
+  theme(legend.position = "none", 
+        plot.title = element_text(hjust = 0.5))
+
+library(SportsAnalytics)
+data("EURO4PlayerSkillsSep11")
+
+soccer_data <- EURO4PlayerSkillsSep11 %>%
+  filter(ShotPower != 0)
+
+gg <- soccer_data %>%
+  ggplot(aes(x = ShotPower, y = ShotAccuracy, colour = Position)) +
+  geom_point()
+
+library(plotly)
+
+ggplotly(gg)
+
+gg <- soccer_data %>%
+  ggplot(aes(x = ShotPower, y = ShotAccuracy, colour = Position, label = Name)) +
+  geom_point()
+
+ggplotly(gg)

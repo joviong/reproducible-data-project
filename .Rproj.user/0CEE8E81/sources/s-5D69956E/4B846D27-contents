@@ -1,0 +1,123 @@
+library(Lahman)
+
+library(tidyverse)
+
+library(broom)
+
+dat <- Lahman::Teams %>%
+  + filter(between(yearID, 1998, 2018)) %>%
+  + mutate(R_per_game = R/G, OBP = (H + BB + HBP)/(AB + BB + HBP + SF))
+
+View(dat)
+
+ggplot(dat, aes(x = OBP, y = R_per_game)) + geom_point(colour = "dodgerblue")
+
+cor(x = dat$OBP, y = dat$R_per_game, method = "pearson")
+
+dat <- mutate(dat, SO_per_game = SO /G)
+
+cor(x = dat$SO_per_game, y = dat$R_per_game, method = "pearson")
+
+ggplot(dat, aes(x = SO/G, y = R_per_game)) + geom_point(colour = "magenta")
+
+ggplot(dat, aes(x = SO/G, y = R_per_game)) + geom_point(colour = "magenta") + ylim(c(0, 10))
+
+lm_plot <- ggplot(dat, aes(x = OBP, y = R_per_game)) +
+  + geom_point(colour = "dodgerblue") +
+  + geom_smooth(method = "lm", colour = "magenta")
+
+lm_plot
+
+fit <- lm(R_per_game ~ OBP, data = dat)
+
+summary(fit)
+
+tidy(fit, conf.int = TRUE)
+
+#what if the OBP is 0.325? Then apply the values of y predictor from intercept and OBP Estimate as per below#
+-5.776238 + 31.574432 * 0.325
+
+#what if the OBP is 0.3?#
+-5.776238 + 31.574432 * 0.3
+
+exp_R_per_game <- predict(fit)
+
+head(exp_R_per_game)
+
+head(dat$OBP)
+
+#to count the OBP for each point without having to type every single value in, use the formula below#
+-5.776238 + 31.574432 * head(dat$OBP)
+
+head(fitted.values(fit))
+
+#rstandard for the linear model, fit object, and save into new object#
+std_res <- rstandard(fit)
+
+#create points, an index of each point in our data, sequence of 1 to the length of the std_res#
+points <- 1:length(std_res)
+
+ggplot(data = NULL, aes(x = points, y = std_res)) + 
+  geom_point() +
+  ylim(c(-4,4)) +
+  geom_hline(yintercept = c(-3,3), colour = "red", linetype = "dashed")
+
+res_labels <- if_else(abs(std_res) >= 2.5, paste(points), "")
+
+ggplot(data = NULL, aes(x = points, y = std_res)) + 
+  geom_point() +
+  geom_text(aes(label = res_labels), nudge_y = 0.3) +
+  ylim(c(-4,4)) +
+  geom_hline(yintercept = c(-3,3), colour = "red", linetype = "dashed")
+
+lm_plot +
+  geom_text(aes(label = res_labels), nudge_x = 0.002)
+
+hats <- hatvalues(fit)
+
+ggplot(data = NULL, aes(x = points, y = hats)) +
+  geom_point()
+
+hat_labels <- if_else(hats >= 0.01, paste(points), "")
+
+ggplot(data = NULL, aes(x = points, y = hats)) +
+  geom_point() +
+  geom_text(aes(label = hat_labels), nudge_y = 0.005)
+
+lm_plot +
+  geom_text(aes(label = hat_labels), nudge_x = 0.002)
+
+cook <- cooks.distance(fit)
+
+ggplot(data = NULL, aes(x = points, y = cook)) +
+  geom_point()
+
+cook_labels <- if_else(cook >= 0.015, paste(points), "")
+
+ggplot(data = NULL, aes(x = points, y = cook)) +
+  geom_point() +
+  geom_text(aes(label = cook_labels), nudge_y = 0.001)
+
+lm_plot + 
+  geom_text(aes(label = cook_labels), nudge_y = 0.002)
+
+durbinWatsonTest(fit)
+
+res <- residuals(fit)
+
+fitted <- predict(fit)
+
+ggplot(data = NULL, aes(x = fitted, y = res)) +
+  geom_point(colour = "dodgerblue") +
+  geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
+
+ggplot(data = NULL, aes(x = fitted, y = res)) +
+  geom_point(colour = "dodgerblue") +
+  geom_smooth(se = FALSE, colour = "magenta")
+
+ggplot(data = NULL, aes(x = res)) + 
+  geom_histogram(colour = "black", fill = "dodgerblue")
+
+ggplot(data = NULL, aes(sample = res)) + 
+  stat_qq() + stat_qq_line()
+

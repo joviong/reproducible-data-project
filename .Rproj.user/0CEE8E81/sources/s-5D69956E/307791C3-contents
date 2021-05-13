@@ -1,0 +1,119 @@
+library(Lahman)
+
+library(tidyverse)
+
+library(broom)
+
+dat <- Teams %>% 
+  filter(between(yearID, 1996, 2015)) %>%
+  mutate(HR_per_game = HR / G, R_per_game = R / G, SB_per_game = SB / G, BB_per_game = BB / G, S_per_game = (H-HR-X2B-X3B) / G, D_per_game = X2B / G, T_per_game = X3B / G)
+
+ggplot(dat, aes(x = SB_per_game, y = R_per_game)) +
+  geom_point(alpha = 0.5, colour = "purple") +
+  geom_smooth(method = 'lm')
+
+ggplot(dat, aes(x = BB_per_game, y = R_per_game)) + 
+  geom_point(alpha = 0.5, colour = "magenta") +
+  geom_smooth(method = "lm")
+
+lm_bb <- lm(R_per_game ~ BB_per_game, data = dat)
+tidy(lm_bb, conf.int = TRUE)
+
+#How many more R_per_game will a team score if we increase the number of BB_per_game by 2?
+0.7520756 * 2
+
+ggplot(dat, aes(x = HR_per_game, y = BB_per_game)) +
+  geom_point(alpha = 0.5, colour = "darkgreen") +
+  geom_smooth(method = "lm")
+
+ggplot(dat, aes(x = HR_per_game, y = R_per_game)) +
+  geom_point(alpha = 0.5, colour = "dodgerblue") +
+  geom_smooth(method = "lm")
+
+pairs(formula = ~R_per_game + BB_per_game + HR_per_game, data = dat)
+
+lm_bb_hr <- lm(R_per_game ~ BB_per_game + HR_per_game, data = dat)
+
+tidy(lm_bb_hr, conf.int = TRUE)
+
+fit <- lm(R_per_game ~ BB_per_game + HR_per_game + S_per_game + D_per_game + T_per_game, data = dat)
+
+tidy(fit, conf.int = TRUE)
+
+head(predict(fit))
+
+car::avPlots(fit)
+
+pairs(formula = ~ BB_per_game + HR_per_game + S_per_game + D_per_game + T_per_game, data = dat)
+
+car::vif(fit)
+
+sqrt(car::vif(fit))
+
+new_dat <- Teams %>%
+  filter(yearID == 2016) %>%
+  mutate(HR_per_game = HR / G, R_per_game = R / G, SB_per_game = SB / G, BB_per_game = BB / G, S_per_game = (H-HR-X2B-X3B) / G, D_per_game = X2B / G, T_per_game = X3B / G)
+
+new_dat <- mutate(new_dat, exp_R_per_game = predict(fit, newdata = new_dat))
+
+ggplot(new_dat, aes(exp_R_per_game, R_per_game, label = teamID)) +
+  geom_point(colour = "dodgerblue") +
+  geom_text(nudge_x = 0.1, cex = 3) + 
+  geom_abline(linetype = "dashed", colour = "magenta")
+
+ggplot(new_dat, aes(x = W, y = exp_R_per_game, label = teamID)) +
+  geom_point(colour = "dodgerblue") +
+  geom_text(nudge_x = 2, cex = 3)
+
+pa_per_game <- Batting %>%
+  filter(yearID == 2016) %>%
+  group_by(teamID) %>%
+  summarise(pa_per_game = sum(AB + BB + HBP + SF + SH)/max(G)) %>%
+  pull(pa_per_game) %>%
+  mean
+
+pa_per_game
+
+players <- Batting %>% 
+  filter(between(yearID, 2011, 2015)) %>%
+  group_by(playerID) %>%
+  mutate(PA = AB + BB + HBP + SF + SH)
+
+head(players)
+
+players <- players %>%
+  summarise(G = sum(PA)/ pa_per_game, 
+            BB_per_game = sum(BB) / G, 
+            S_per_game = sum(H-X2B-X3B-HR) / G, 
+            D_per_game = sum(X2B) / G, 
+            T_per_game = sum(X3B) / G, 
+            HR_per_game = sum(HR) / G, 
+            BA_per_game = sum(H) / sum(AB), 
+            PA = sum(PA)) %>%
+  filter(PA >= 200) %>%
+  select(-G)
+
+players
+
+players <- mutate(players, exp_Runs = predict(fit, newdata = players))
+
+players %>%
+  ggplot(aes(x = exp_Runs)) + 
+  geom_histogram(binwidth = 0.5, colour = "black", fill = "dodgerblue")
+
+players <- Salaries %>%
+  filter(yearID == 2016) %>%
+  select(playerID, salary) %>%
+  right_join(players, by = "playerID")
+
+source("add_position_names.R")
+
+players %>%
+  select(nameFirst, nameLast, POS, salary, exp_Runs) %>%
+  arrange(desc(exp_Runs, salary))%>%
+  top_n(10)
+
+players %>% ggplot(aes(x = salary/10000000, y = exp_Runs, color = POS)) +
+  geom_point() +
+  xlab("Salary (Millions)")
+

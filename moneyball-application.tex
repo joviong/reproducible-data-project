@@ -1,0 +1,998 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Moneyball Application: Application of a linear regression model to basketball statistics},
+  pdfauthor={Jovi Ong},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Moneyball Application: Application of a linear regression model
+to basketball statistics}
+\author{Jovi Ong}
+\date{14/05/2021}
+
+\begin{document}
+\maketitle
+
+\hypertarget{introduction}{%
+\subsection{Introduction}\label{introduction}}
+
+The National Basketball Association (NBA) is considered the premier
+league in the world for men's basketball. (1) With teams located out of
+the North American regions, the league is divided into two conferences,
+Eastern and Western conference, consisting of thirty teams. In an
+eighty-two games regular season format, each team from their respective
+conferences competes over several months in order to qualify for the
+post-season, best of seven games knockout style tournament, also known
+as the ``Playoffs''. (2) With only sixteen spots available, eight teams
+per conference, a champion from each conference then proceeds onto the
+Final Series to play for the status of world champions and the Larry
+O'Brien Trophy.
+
+With a win to loss record of 22 to 60 in the previous 2018/19 season,
+the Chicago Bulls finished at 27th overall in the league and 13th in
+their Eastern Conference. (3) Given the lower budget, ranking at 26 out
+of 30, within the NBA, the general manager of Chicago Bulls is looking
+to restructure the roster for 2019/20 season in order to provide the
+franchise with a better opportunity to qualify for the post-season
+playoffs.
+
+As winning games prove to be much more profitable and beneficial for a
+team in the NBA (1), many teams have shifted their focus on to
+statistical analysis in order to increase their capabilities of doing
+so. (4) However, we first need to understand the metrics involved in
+winning the game and their correlation to individual player metrics in
+building a roster that fits the coach's game plan. Whilst a closer look
+into box scores have shown winning teams are often considered to be
+efficient in both the offensive and defensive end of the game, building
+a team with players that can contribute to the teams' net efficiency
+rating, the difference between offensive and defensive rating, depends
+on individual player attributes. (2) Player attributes that have been
+linked to each teams' success have also been narrowed down to the
+following; (2, 4) - Effective field goal percentages (eFG\%) - Turnover
+percentages (TOV\%) - Rebound percentages (ORB\% + DRB\%) - Free throw
+rates (FTA/FGM) *FTA -- Free throw attempts, FGM -- Field goals made,
+ORB\% -- Offensive rebound percentage, DRB\% - Defensive rebound
+percentage
+
+However, when selecting players for their positions, Point Guard (PG),
+Shooting Guard (SG), Small Forward (SF), Power Forward (PF), Centre (C),
+coaches may consider their PGs as the director of the team on the floor
+whereby they are expected to be creating opportunities for their
+scorers, SG and SF, to have an attempt at shot. On the defensive end
+however, coaches may then consider their `BIGs' (PF and C) to be the
+main players in preventing the opponent from scoring. (5)
+
+\hypertarget{data-analysis}{%
+\subsection{Data Analysis}\label{data-analysis}}
+
+\hypertarget{loading-library}{%
+\subsubsection{Loading library}\label{loading-library}}
+
+Firstly we need to load the relevant packages for our library
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching packages --------------------------------------- tidyverse 1.3.0 --
+\end{verbatim}
+
+\begin{verbatim}
+## v ggplot2 3.3.3     v purrr   0.3.4
+## v tibble  3.1.0     v dplyr   1.0.4
+## v tidyr   1.1.2     v stringr 1.4.0
+## v readr   1.4.0     v forcats 0.5.1
+\end{verbatim}
+
+\begin{verbatim}
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(broom)}
+\FunctionTok{library}\NormalTok{(zoo)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Attaching package: 'zoo'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     as.Date, as.Date.numeric
+\end{verbatim}
+
+\hypertarget{reading-data}{%
+\subsubsection{Reading data}\label{reading-data}}
+
+Then we will need to read in our csv format data files from the local
+directory into our global environment using the \texttt{read\_csv()}
+from the \texttt{readr} package.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# reading in the data for all five documents \#}
+\NormalTok{player\_stats }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"data/raw/2018{-}19\_nba\_player{-}statistics.csv"}\NormalTok{)}
+\NormalTok{team\_stats\_1 }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"data/raw/2018{-}19\_nba\_team{-}statistics\_1.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: Missing column names filled in: 'X23' [23], 'X24' [24], 'X25' [25]
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{team\_stats\_2 }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"data/raw/2018{-}19\_nba\_team{-}statistics\_2.csv"}\NormalTok{)}
+\NormalTok{player\_salary }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"data/raw/2018{-}19\_nba\_player{-}salaries.csv"}\NormalTok{)}
+\NormalTok{team\_salary }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"data/raw/2019{-}20\_nba\_team{-}payroll.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{checking-data}{%
+\subsubsection{Checking data}\label{checking-data}}
+
+Once completed, the data is then checked by using the following codes
+
+To check the structure of data file using \texttt{str()}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str}\NormalTok{(team\_stats\_1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spec_tbl_df [30 x 25] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##  $ Rk    : num [1:30] 1 2 3 4 5 6 7 8 9 10 ...
+##  $ Team  : chr [1:30] "Milwaukee Bucks" "Golden State Warriors" "Toronto Raptors" "Utah Jazz" ...
+##  $ Age   : num [1:30] 26.9 28.4 27.3 27.3 29.2 26.2 24.9 25.7 25.7 27 ...
+##  $ W     : num [1:30] 60 57 58 50 53 53 54 49 49 48 ...
+##  $ L     : num [1:30] 22 25 24 32 29 29 28 33 33 34 ...
+##  $ PW    : num [1:30] 61 56 56 54 53 51 51 52 50 50 ...
+##  $ PL    : num [1:30] 21 26 26 28 29 31 31 30 32 32 ...
+##  $ MOV   : num [1:30] 8.87 6.46 6.09 5.26 4.77 4.2 3.95 4.44 3.4 3.33 ...
+##  $ SOS   : num [1:30] -0.82 -0.04 -0.6 0.03 0.19 0.24 0.24 -0.54 0.15 -0.57 ...
+##  $ SRS   : num [1:30] 8.04 6.42 5.49 5.28 4.96 4.43 4.19 3.9 3.56 2.76 ...
+##  $ ORtg  : num [1:30] 114 116 113 111 116 ...
+##  $ DRtg  : num [1:30] 105 110 107 106 111 ...
+##  $ NRtg  : num [1:30] 8.6 6.4 6 5.2 4.8 4.2 4.1 4.4 3.3 3.4 ...
+##  $ Pace  : num [1:30] 103.3 100.9 100.2 100.3 97.9 ...
+##  $ FTr   : num [1:30] 0.255 0.227 0.247 0.295 0.279 0.258 0.232 0.215 0.266 0.242 ...
+##  $ 3PAr  : num [1:30] 0.419 0.384 0.379 0.394 0.519 0.339 0.348 0.381 0.347 0.292 ...
+##  $ TS%   : num [1:30] 0.583 0.596 0.579 0.572 0.581 0.568 0.558 0.567 0.545 0.561 ...
+##  $ eFG%  : num [1:30] 0.55 0.565 0.543 0.538 0.542 0.528 0.527 0.534 0.514 0.53 ...
+##  $ TOV%  : num [1:30] 12 12.6 12.4 13.4 12 12.1 11.9 11.5 11.7 12.4 ...
+##  $ ORB%  : num [1:30] 20.8 22.5 21.9 22.9 22.8 26.6 26.6 21.6 26 21.9 ...
+##  $ FT/FGA: num [1:30] 0.197 0.182 0.198 0.217 0.221 0.21 0.175 0.173 0.19 0.182 ...
+##  $ DRB%  : num [1:30] 80.3 77.1 77.1 80.3 74.4 77.9 78 77 78.2 76.2 ...
+##  $ X23   : logi [1:30] NA NA NA NA NA NA ...
+##  $ X24   : logi [1:30] NA NA NA NA NA NA ...
+##  $ X25   : logi [1:30] NA NA NA NA NA NA ...
+##  - attr(*, "spec")=
+##   .. cols(
+##   ..   Rk = col_double(),
+##   ..   Team = col_character(),
+##   ..   Age = col_double(),
+##   ..   W = col_double(),
+##   ..   L = col_double(),
+##   ..   PW = col_double(),
+##   ..   PL = col_double(),
+##   ..   MOV = col_double(),
+##   ..   SOS = col_double(),
+##   ..   SRS = col_double(),
+##   ..   ORtg = col_double(),
+##   ..   DRtg = col_double(),
+##   ..   NRtg = col_double(),
+##   ..   Pace = col_double(),
+##   ..   FTr = col_double(),
+##   ..   `3PAr` = col_double(),
+##   ..   `TS%` = col_double(),
+##   ..   `eFG%` = col_double(),
+##   ..   `TOV%` = col_double(),
+##   ..   `ORB%` = col_double(),
+##   ..   `FT/FGA` = col_double(),
+##   ..   `DRB%` = col_double(),
+##   ..   X23 = col_logical(),
+##   ..   X24 = col_logical(),
+##   ..   X25 = col_logical()
+##   .. )
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str}\NormalTok{(team\_stats\_2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spec_tbl_df [30 x 25] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##  $ Rk  : num [1:30] 1 2 3 4 5 6 7 8 9 10 ...
+##  $ Team: chr [1:30] "Milwaukee Bucks" "Golden State Warriors" "New Orleans Pelicans" "Philadelphia 76ers" ...
+##  $ G   : num [1:30] 82 82 82 82 82 82 82 82 82 82 ...
+##  $ MP  : num [1:30] 19780 19805 19755 19805 19830 ...
+##  $ FG  : num [1:30] 3555 3612 3581 3407 3384 ...
+##  $ FGA : num [1:30] 7471 7361 7563 7233 7178 ...
+##  $ FG% : num [1:30] 0.476 0.491 0.473 0.471 0.471 0.467 0.454 0.474 0.464 0.468 ...
+##  $ 3P  : num [1:30] 1105 1087 842 889 821 ...
+##  $ 3PA : num [1:30] 3134 2824 2449 2474 2118 ...
+##  $ 3P% : num [1:30] 0.353 0.385 0.344 0.359 0.388 0.359 0.348 0.366 0.378 0.341 ...
+##  $ 2P  : num [1:30] 2450 2525 2739 2518 2563 ...
+##  $ 2PA : num [1:30] 4337 4537 5114 4759 5060 ...
+##  $ 2P% : num [1:30] 0.565 0.557 0.536 0.529 0.507 0.523 0.51 0.539 0.504 0.543 ...
+##  $ FT  : num [1:30] 1471 1339 1462 1742 1853 ...
+##  $ FTA : num [1:30] 1904 1672 1921 2258 2340 ...
+##  $ FT% : num [1:30] 0.773 0.801 0.761 0.771 0.792 0.814 0.713 0.804 0.726 0.768 ...
+##  $ ORB : num [1:30] 762 797 909 892 796 ...
+##  $ DRB : num [1:30] 3316 2990 2969 3025 2936 ...
+##  $ TRB : num [1:30] 4078 3787 3878 3917 3732 ...
+##  $ AST : num [1:30] 2136 2413 2216 2207 1970 ...
+##  $ STL : num [1:30] 615 625 610 606 561 546 766 680 679 683 ...
+##  $ BLK : num [1:30] 486 525 441 432 385 413 425 437 363 379 ...
+##  $ TOV : num [1:30] 1137 1169 1215 1223 1193 ...
+##  $ PF  : num [1:30] 1608 1757 1732 1745 1913 ...
+##  $ PTS : num [1:30] 9686 9650 9466 9445 9442 ...
+##  - attr(*, "spec")=
+##   .. cols(
+##   ..   Rk = col_double(),
+##   ..   Team = col_character(),
+##   ..   G = col_double(),
+##   ..   MP = col_double(),
+##   ..   FG = col_double(),
+##   ..   FGA = col_double(),
+##   ..   `FG%` = col_double(),
+##   ..   `3P` = col_double(),
+##   ..   `3PA` = col_double(),
+##   ..   `3P%` = col_double(),
+##   ..   `2P` = col_double(),
+##   ..   `2PA` = col_double(),
+##   ..   `2P%` = col_double(),
+##   ..   FT = col_double(),
+##   ..   FTA = col_double(),
+##   ..   `FT%` = col_double(),
+##   ..   ORB = col_double(),
+##   ..   DRB = col_double(),
+##   ..   TRB = col_double(),
+##   ..   AST = col_double(),
+##   ..   STL = col_double(),
+##   ..   BLK = col_double(),
+##   ..   TOV = col_double(),
+##   ..   PF = col_double(),
+##   ..   PTS = col_double()
+##   .. )
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str}\NormalTok{(team\_salary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spec_tbl_df [30 x 3] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##  $ team_id: num [1:30] 1 2 3 4 5 6 7 8 9 10 ...
+##  $ team   : chr [1:30] "Miami" "Golden State" "Oklahoma City" "Toronto" ...
+##  $ salary : chr [1:30] "$153,171,497" "$146,291,276" "$144,916,427" "$137,793,831" ...
+##  - attr(*, "spec")=
+##   .. cols(
+##   ..   team_id = col_double(),
+##   ..   team = col_character(),
+##   ..   salary = col_character()
+##   .. )
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str}\NormalTok{(player\_stats)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spec_tbl_df [708 x 29] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##  $ player_name: chr [1:708] "Alex Abrines" "Quincy Acy" "Jaylen Adams" "Steven Adams" ...
+##  $ Pos        : chr [1:708] "SG" "PF" "PG" "C" ...
+##  $ Age        : num [1:708] 25 28 22 25 21 21 25 33 21 23 ...
+##  $ Tm         : chr [1:708] "OKC" "PHO" "ATL" "OKC" ...
+##  $ G          : num [1:708] 31 10 34 80 82 19 7 81 10 38 ...
+##  $ GS         : num [1:708] 2 0 1 80 28 3 0 81 1 2 ...
+##  $ MP         : num [1:708] 588 123 428 2669 1913 ...
+##  $ FG         : num [1:708] 56 4 38 481 280 11 3 684 13 67 ...
+##  $ FGA        : num [1:708] 157 18 110 809 486 ...
+##  $ FG%        : num [1:708] 0.357 0.222 0.345 0.595 0.576 0.306 0.3 0.519 0.333 0.376 ...
+##  $ 3P         : num [1:708] 41 2 25 0 3 6 0 10 3 32 ...
+##  $ 3PA        : num [1:708] 127 15 74 2 15 23 4 42 12 99 ...
+##  $ 3P%        : num [1:708] 0.323 0.133 0.338 0 0.2 0.261 0 0.238 0.25 0.323 ...
+##  $ 2P         : num [1:708] 15 2 13 481 277 5 3 674 10 35 ...
+##  $ 2PA        : num [1:708] 30 3 36 807 471 ...
+##  $ 2P%        : num [1:708] 0.5 0.667 0.361 0.596 0.588 0.385 0.5 0.528 0.37 0.443 ...
+##  $ eFG%       : num [1:708] 0.487 0.278 0.459 0.595 0.579 0.389 0.3 0.522 0.372 0.466 ...
+##  $ FT         : num [1:708] 12 7 7 146 166 4 1 349 8 45 ...
+##  $ FTA        : num [1:708] 13 10 9 292 226 4 2 412 12 60 ...
+##  $ FT%        : num [1:708] 0.923 0.7 0.778 0.5 0.735 1 0.5 0.847 0.667 0.75 ...
+##  $ ORB        : num [1:708] 5 3 11 391 165 3 1 251 11 3 ...
+##  $ DRB        : num [1:708] 43 22 49 369 432 16 3 493 15 20 ...
+##  $ TRB        : num [1:708] 48 25 60 760 597 19 4 744 26 23 ...
+##  $ AST        : num [1:708] 20 8 65 124 184 5 6 194 13 25 ...
+##  $ STL        : num [1:708] 17 1 14 117 71 1 2 43 1 6 ...
+##  $ BLK        : num [1:708] 6 4 5 76 65 4 0 107 0 6 ...
+##  $ TOV        : num [1:708] 14 4 28 135 121 6 2 144 8 33 ...
+##  $ PF         : num [1:708] 53 24 45 204 203 13 4 179 7 47 ...
+##  $ PTS        : num [1:708] 165 17 108 1108 729 ...
+##  - attr(*, "spec")=
+##   .. cols(
+##   ..   player_name = col_character(),
+##   ..   Pos = col_character(),
+##   ..   Age = col_double(),
+##   ..   Tm = col_character(),
+##   ..   G = col_double(),
+##   ..   GS = col_double(),
+##   ..   MP = col_double(),
+##   ..   FG = col_double(),
+##   ..   FGA = col_double(),
+##   ..   `FG%` = col_double(),
+##   ..   `3P` = col_double(),
+##   ..   `3PA` = col_double(),
+##   ..   `3P%` = col_double(),
+##   ..   `2P` = col_double(),
+##   ..   `2PA` = col_double(),
+##   ..   `2P%` = col_double(),
+##   ..   `eFG%` = col_double(),
+##   ..   FT = col_double(),
+##   ..   FTA = col_double(),
+##   ..   `FT%` = col_double(),
+##   ..   ORB = col_double(),
+##   ..   DRB = col_double(),
+##   ..   TRB = col_double(),
+##   ..   AST = col_double(),
+##   ..   STL = col_double(),
+##   ..   BLK = col_double(),
+##   ..   TOV = col_double(),
+##   ..   PF = col_double(),
+##   ..   PTS = col_double()
+##   .. )
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{str}\NormalTok{(player\_salary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spec_tbl_df [576 x 3] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##  $ player_id  : num [1:576] 1 2 3 4 5 6 7 8 9 10 ...
+##  $ player_name: chr [1:576] "Alex Abrines" "Quincy Acy" "Steven Adams" "Jaylen Adams" ...
+##  $ salary     : num [1:576] 3667645 213948 24157304 236854 2955840 ...
+##  - attr(*, "spec")=
+##   .. cols(
+##   ..   player_id = col_double(),
+##   ..   player_name = col_character(),
+##   ..   salary = col_double()
+##   .. )
+\end{verbatim}
+
+When checking the first six rows of data using \texttt{head()}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(team\_stats\_1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 25
+##      Rk Team     Age     W     L    PW    PL   MOV   SOS   SRS  ORtg  DRtg  NRtg
+##   <dbl> <chr>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1     1 Milwa~  26.9    60    22    61    21  8.87 -0.82  8.04  114.  105.   8.6
+## 2     2 Golde~  28.4    57    25    56    26  6.46 -0.04  6.42  116.  110.   6.4
+## 3     3 Toron~  27.3    58    24    56    26  6.09 -0.6   5.49  113.  107.   6  
+## 4     4 Utah ~  27.3    50    32    54    28  5.26  0.03  5.28  111.  106.   5.2
+## 5     5 Houst~  29.2    53    29    53    29  4.77  0.19  4.96  116.  111.   4.8
+## 6     6 Portl~  26.2    53    29    51    31  4.2   0.24  4.43  115.  110.   4.2
+## # ... with 12 more variables: Pace <dbl>, FTr <dbl>, 3PAr <dbl>, TS% <dbl>,
+## #   eFG% <dbl>, TOV% <dbl>, ORB% <dbl>, FT/FGA <dbl>, DRB% <dbl>, X23 <lgl>,
+## #   X24 <lgl>, X25 <lgl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(team\_stats\_2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 25
+##      Rk Team       G    MP    FG   FGA `FG%`  `3P` `3PA` `3P%`  `2P` `2PA` `2P%`
+##   <dbl> <chr>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1     1 Milwa~    82 19780  3555  7471 0.476  1105  3134 0.353  2450  4337 0.565
+## 2     2 Golde~    82 19805  3612  7361 0.491  1087  2824 0.385  2525  4537 0.557
+## 3     3 New O~    82 19755  3581  7563 0.473   842  2449 0.344  2739  5114 0.536
+## 4     4 Phila~    82 19805  3407  7233 0.471   889  2474 0.359  2518  4759 0.529
+## 5     5 Los A~    82 19830  3384  7178 0.471   821  2118 0.388  2563  5060 0.507
+## 6     6 Portl~    82 19855  3470  7427 0.467   904  2520 0.359  2566  4907 0.523
+## # ... with 12 more variables: FT <dbl>, FTA <dbl>, FT% <dbl>, ORB <dbl>,
+## #   DRB <dbl>, TRB <dbl>, AST <dbl>, STL <dbl>, BLK <dbl>, TOV <dbl>, PF <dbl>,
+## #   PTS <dbl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(team\_salary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 3
+##   team_id team          salary      
+##     <dbl> <chr>         <chr>       
+## 1       1 Miami         $153,171,497
+## 2       2 Golden State  $146,291,276
+## 3       3 Oklahoma City $144,916,427
+## 4       4 Toronto       $137,793,831
+## 5       5 Milwaukee     $130,988,604
+## 6       6 Portland      $130,256,600
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(player\_stats)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 29
+##   player_name  Pos     Age Tm        G    GS    MP    FG   FGA `FG%`  `3P` `3PA`
+##   <chr>        <chr> <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 Alex Abrines SG       25 OKC      31     2   588    56   157 0.357    41   127
+## 2 Quincy Acy   PF       28 PHO      10     0   123     4    18 0.222     2    15
+## 3 Jaylen Adams PG       22 ATL      34     1   428    38   110 0.345    25    74
+## 4 Steven Adams C        25 OKC      80    80  2669   481   809 0.595     0     2
+## 5 Bam Adebayo  C        21 MIA      82    28  1913   280   486 0.576     3    15
+## 6 Deng Adel    SF       21 CLE      19     3   194    11    36 0.306     6    23
+## # ... with 17 more variables: 3P% <dbl>, 2P <dbl>, 2PA <dbl>, 2P% <dbl>,
+## #   eFG% <dbl>, FT <dbl>, FTA <dbl>, FT% <dbl>, ORB <dbl>, DRB <dbl>,
+## #   TRB <dbl>, AST <dbl>, STL <dbl>, BLK <dbl>, TOV <dbl>, PF <dbl>, PTS <dbl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(player\_salary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 3
+##   player_id player_name    salary
+##       <dbl> <chr>           <dbl>
+## 1         1 Alex Abrines  3667645
+## 2         2 Quincy Acy     213948
+## 3         3 Steven Adams 24157304
+## 4         4 Jaylen Adams   236854
+## 5         5 Bam Adebayo   2955840
+## 6         6 Deng Adel       77250
+\end{verbatim}
+
+To check the last six rows of the data file using \texttt{tail()}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tail}\NormalTok{(team\_stats\_1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 25
+##      Rk Team     Age     W     L    PW    PL   MOV   SOS   SRS  ORtg  DRtg  NRtg
+##   <dbl> <chr>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1    25 Washi~  26.5    32    50    34    48 -2.9  -0.4  -3.3   111.  114.  -2.8
+## 2    26 Atlan~  25.1    29    53    27    55 -6.02 -0.04 -6.06  108.  114.  -5.8
+## 3    27 Chica~  24      22    60    21    61 -8.41  0.1  -8.32  105.  113.  -8.4
+## 4    28 Phoen~  24      19    63    19    63 -9.34  0.73 -8.61  106.  115.  -9.2
+## 5    29 New Y~  23.4    17    65    19    63 -9.21  0.28 -8.93  104.  114.  -9.2
+## 6    30 Cleve~  25.2    19    63    19    63 -9.61  0.22 -9.39  108.  118.  -9.9
+## # ... with 12 more variables: Pace <dbl>, FTr <dbl>, 3PAr <dbl>, TS% <dbl>,
+## #   eFG% <dbl>, TOV% <dbl>, ORB% <dbl>, FT/FGA <dbl>, DRB% <dbl>, X23 <lgl>,
+## #   X24 <lgl>, X25 <lgl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tail}\NormalTok{(team\_stats\_2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 25
+##      Rk Team       G    MP    FG   FGA `FG%`  `3P` `3PA` `3P%`  `2P` `2PA` `2P%`
+##   <dbl> <chr>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1    25 Detro~    82 19855  3185  7238 0.44    993  2854 0.348  2192  4384 0.5  
+## 2    26 Miami~    82 19730  3251  7218 0.45    928  2658 0.349  2323  4560 0.509
+## 3    27 Chica~    82 19905  3266  7205 0.453   745  2123 0.351  2521  5082 0.496
+## 4    28 New Y~    82 19780  3134  7241 0.433   823  2421 0.34   2311  4820 0.479
+## 5    29 Cleve~    82 19755  3189  7184 0.444   847  2388 0.355  2342  4796 0.488
+## 6    30 Memph~    82 19880  3113  6924 0.45    811  2368 0.342  2302  4556 0.505
+## # ... with 12 more variables: FT <dbl>, FTA <dbl>, FT% <dbl>, ORB <dbl>,
+## #   DRB <dbl>, TRB <dbl>, AST <dbl>, STL <dbl>, BLK <dbl>, TOV <dbl>, PF <dbl>,
+## #   PTS <dbl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tail}\NormalTok{(team\_salary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 3
+##   team_id team       salary      
+##     <dbl> <chr>      <chr>       
+## 1      25 Indiana    $110,724,804
+## 2      26 Phoenix    $108,692,835
+## 3      27 LA Lakers  $107,225,482
+## 4      28 Sacramento $101,466,920
+## 5      29 Dallas     $86,958,881 
+## 6      30 Atlanta    $79,180,081
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tail}\NormalTok{(player\_stats)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 29
+##   player_name Pos     Age Tm        G    GS    MP    FG   FGA `FG%`  `3P` `3PA`
+##   <chr>       <chr> <dbl> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 Ivica Zubac C        21 LAL      33    12   516   112   193 0.580     0     0
+## 2 Ivica Zubac C        21 TOT      59    37  1040   212   379 0.559     0     0
+## 3 Dario Saric PF       24 PHI      13    13   396    48   132 0.364    21    70
+## 4 Dario Saric PF       24 MIN      68    28  1627   256   564 0.454    97   253
+## 5 Dario Saric PF       24 TOT      81    41  2023   304   696 0.437   118   323
+## 6 Ante Zizic  C        22 CLE      59    25  1082   183   331 0.553     0     0
+## # ... with 17 more variables: 3P% <dbl>, 2P <dbl>, 2PA <dbl>, 2P% <dbl>,
+## #   eFG% <dbl>, FT <dbl>, FTA <dbl>, FT% <dbl>, ORB <dbl>, DRB <dbl>,
+## #   TRB <dbl>, AST <dbl>, STL <dbl>, BLK <dbl>, TOV <dbl>, PF <dbl>, PTS <dbl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{tail}\NormalTok{(player\_salary)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 3
+##   player_id player_name    salary
+##       <dbl> <chr>           <dbl>
+## 1       571 Rade Zagorac  1378242
+## 2       572 Cody Zeller  13528090
+## 3       573 Tyler Zeller   213948
+## 4       574 Ante Zizic    1952760
+## 5       575 Ivica Zubac   1544951
+## 6       576 Nene          3651480
+\end{verbatim}
+
+We then locate the missing values found in the data from the following:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# counting missing values of each dataset \#}
+\FunctionTok{sum}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(team\_stats\_1))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 90
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sum}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(team\_stats\_2))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sum}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(team\_salary))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sum}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(player\_stats))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 117
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sum}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(player\_salary))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#identifying where the missing values are by showing only first six rows \#}
+\FunctionTok{which}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(player\_stats), }\AttributeTok{arr.ind =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        row col
+##   [1,] 303  10
+##   [2,] 371  10
+##   [3,] 478  10
+##   [4,] 600  10
+##   [5,] 614  10
+##   [6,] 652  10
+##   [7,]  19  13
+##   [8,]  21  13
+##   [9,]  59  13
+##  [10,]  66  13
+##  [11,]  74  13
+##  [12,] 113  13
+##  [13,] 126  13
+##  [14,] 132  13
+##  [15,] 165  13
+##  [16,] 170  13
+##  [17,] 205  13
+##  [18,] 245  13
+##  [19,] 249  13
+##  [20,] 290  13
+##  [21,] 303  13
+##  [22,] 305  13
+##  [23,] 311  13
+##  [24,] 334  13
+##  [25,] 355  13
+##  [26,] 361  13
+##  [27,] 362  13
+##  [28,] 363  13
+##  [29,] 371  13
+##  [30,] 382  13
+##  [31,] 473  13
+##  [32,] 478  13
+##  [33,] 487  13
+##  [34,] 504  13
+##  [35,] 540  13
+##  [36,] 551  13
+##  [37,] 552  13
+##  [38,] 568  13
+##  [39,] 600  13
+##  [40,] 614  13
+##  [41,] 621  13
+##  [42,] 634  13
+##  [43,] 635  13
+##  [44,] 636  13
+##  [45,] 642  13
+##  [46,] 651  13
+##  [47,] 652  13
+##  [48,] 684  13
+##  [49,] 701  13
+##  [50,] 702  13
+##  [51,] 703  13
+##  [52,] 704  13
+##  [53,] 708  13
+##  [54,]  32  16
+##  [55,] 194  16
+##  [56,] 207  16
+##  [57,] 254  16
+##  [58,] 303  16
+##  [59,] 335  16
+##  [60,] 371  16
+##  [61,] 407  16
+##  [62,] 414  16
+##  [63,] 478  16
+##  [64,] 595  16
+##  [65,] 600  16
+##  [66,] 614  16
+##  [67,] 652  16
+##  [68,] 675  16
+##  [69,] 303  17
+##  [70,] 371  17
+##  [71,] 478  17
+##  [72,] 600  17
+##  [73,] 614  17
+##  [74,] 652  17
+##  [75,]  19  20
+##  [76,]  32  20
+##  [77,]  55  20
+##  [78,] 109  20
+##  [79,] 124  20
+##  [80,] 132  20
+##  [81,] 133  20
+##  [82,] 154  20
+##  [83,] 165  20
+##  [84,] 193  20
+##  [85,] 194  20
+##  [86,] 207  20
+##  [87,] 208  20
+##  [88,] 209  20
+##  [89,] 254  20
+##  [90,] 277  20
+##  [91,] 303  20
+##  [92,] 313  20
+##  [93,] 319  20
+##  [94,] 335  20
+##  [95,] 341  20
+##  [96,] 371  20
+##  [97,] 407  20
+##  [98,] 425  20
+##  [99,] 436  20
+## [100,] 443  20
+## [101,] 473  20
+## [102,] 478  20
+## [103,] 479  20
+## [104,] 480  20
+## [105,] 495  20
+## [106,] 507  20
+## [107,] 537  20
+## [108,] 552  20
+## [109,] 557  20
+## [110,] 595  20
+## [111,] 600  20
+## [112,] 614  20
+## [113,] 621  20
+## [114,] 652  20
+## [115,] 675  20
+## [116,] 695  20
+## [117,] 699  20
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{which}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(team\_stats\_1), }\AttributeTok{arr.ind =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       row col
+##  [1,]   1  23
+##  [2,]   2  23
+##  [3,]   3  23
+##  [4,]   4  23
+##  [5,]   5  23
+##  [6,]   6  23
+##  [7,]   7  23
+##  [8,]   8  23
+##  [9,]   9  23
+## [10,]  10  23
+## [11,]  11  23
+## [12,]  12  23
+## [13,]  13  23
+## [14,]  14  23
+## [15,]  15  23
+## [16,]  16  23
+## [17,]  17  23
+## [18,]  18  23
+## [19,]  19  23
+## [20,]  20  23
+## [21,]  21  23
+## [22,]  22  23
+## [23,]  23  23
+## [24,]  24  23
+## [25,]  25  23
+## [26,]  26  23
+## [27,]  27  23
+## [28,]  28  23
+## [29,]  29  23
+## [30,]  30  23
+## [31,]   1  24
+## [32,]   2  24
+## [33,]   3  24
+## [34,]   4  24
+## [35,]   5  24
+## [36,]   6  24
+## [37,]   7  24
+## [38,]   8  24
+## [39,]   9  24
+## [40,]  10  24
+## [41,]  11  24
+## [42,]  12  24
+## [43,]  13  24
+## [44,]  14  24
+## [45,]  15  24
+## [46,]  16  24
+## [47,]  17  24
+## [48,]  18  24
+## [49,]  19  24
+## [50,]  20  24
+## [51,]  21  24
+## [52,]  22  24
+## [53,]  23  24
+## [54,]  24  24
+## [55,]  25  24
+## [56,]  26  24
+## [57,]  27  24
+## [58,]  28  24
+## [59,]  29  24
+## [60,]  30  24
+## [61,]   1  25
+## [62,]   2  25
+## [63,]   3  25
+## [64,]   4  25
+## [65,]   5  25
+## [66,]   6  25
+## [67,]   7  25
+## [68,]   8  25
+## [69,]   9  25
+## [70,]  10  25
+## [71,]  11  25
+## [72,]  12  25
+## [73,]  13  25
+## [74,]  14  25
+## [75,]  15  25
+## [76,]  16  25
+## [77,]  17  25
+## [78,]  18  25
+## [79,]  19  25
+## [80,]  20  25
+## [81,]  21  25
+## [82,]  22  25
+## [83,]  23  25
+## [84,]  24  25
+## [85,]  25  25
+## [86,]  26  25
+## [87,]  27  25
+## [88,]  28  25
+## [89,]  29  25
+## [90,]  30  25
+\end{verbatim}
+
+\hypertarget{metrics-for-a-winning-team-formula}{%
+\subsection{Metrics for a Winning Team
+Formula}\label{metrics-for-a-winning-team-formula}}
+
+The relationship between team offensive rating and regular season wins:
+
+\hypertarget{references}{%
+\subsection{References}\label{references}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Elmore R. Predicting Which Teams Will Make the NBA Playoffs. Available
+  at SSRN 2764482. 2016.
+\item
+  Teramoto M, Cross CL. Relative importance of performance factors in
+  winning NBA games in regular season versus playoffs. Journal of
+  Quantitative Analysis in Sports. 2010;6(3).
+\item
+  ESPN. NBA Standings 2018-19: espn.com.au; 2019 {[}cited 2021 5th
+  May{]}. Available from:
+  \url{https://www.espn.com.au/nba/table/_/season/2019}.
+\item
+  Kubatko J, Oliver D, Pelton K, Rosenbaum DT. A starting point for
+  analyzing basketball statistics. Journal of quantitative analysis in
+  sports. 2007;3(3).
+\item
+  Rangel W, Ugrinowitsch C, Lamas L. Basketball players' versatility:
+  Assessing the diversity of tactical roles. International Journal of
+  Sports Science \& Coaching. 2019;14(4):552-61.
+\end{enumerate}
+
+\end{document}

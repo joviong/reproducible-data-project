@@ -1,0 +1,507 @@
+---
+title: 'Moneyball Application: Application of a linear regression model to basketball
+  statistics'
+author: "Jovi Ong"
+date: "14/05/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+The National Basketball Association (NBA) is considered the premier league in the world for men’s basketball. (1) With teams located out of the North American regions, the league is divided into two conferences, Eastern and Western conference, consisting of thirty teams. In an eighty-two games regular season format, each team from their respective conferences competes over several months in order to qualify for the post-season, best of seven games knockout style tournament, also known as the “Playoffs”. (2) With only sixteen spots available, eight teams per conference, a champion from each conference then proceeds onto the Final Series to play for the status of world champions and the Larry O’Brien Trophy. 
+
+With a win to loss record of 22 to 60 in the previous 2018/19 season, the Chicago Bulls finished at 27th overall in the league and 13th in their Eastern Conference. (3) Given the lower budget, ranking at 26 out of 30, within the NBA, the general manager of Chicago Bulls is looking to restructure the roster for 2019/20 season in order to provide the franchise with a better opportunity to qualify for the post-season playoffs. 
+
+As winning games prove to be much more profitable and beneficial for a team in the NBA (1), many teams have shifted their focus on to statistical analysis in order to increase their capabilities of doing so. (4) However, we first need to understand the metrics involved in winning the game and their correlation to individual player metrics in building a roster that fits the coach’s game plan. Whilst a closer look into box scores have shown winning teams are often considered to be efficient in both the offensive and defensive end of the game, building a team with players that can contribute to the teams’ net efficiency rating, the difference between offensive and defensive rating, depends on individual player attributes. (2) Player attributes that have been linked to each teams’ success have also been narrowed down to the following; (2, 4)
+-	Effective field goal percentages (eFG%)
+-	Turnover percentages (TOV%)
+-	Rebound percentages (ORB% + DRB%)
+-	Free throw rates (FTA/FGM)
+*FTA – Free throw attempts, FGM – Field goals made, ORB% – Offensive rebound percentage, DRB% - Defensive rebound percentage
+
+However, when selecting players for their positions, Point Guard (PG), Shooting Guard (SG), Small Forward (SF), Power Forward (PF), Centre (C), coaches may consider their PGs as the director of the team on the floor whereby they are expected to be creating opportunities for their scorers, SG and SF, to have an attempt at shot. On the defensive end however, coaches may then consider their ‘BIGs’ (PF and C) to be the main players in preventing the opponent from scoring. (5)
+
+## Reading and Cleaning Raw Data
+
+### Loading library
+Firstly we need to load the relevant packages for our library
+```{r library}
+library(tidyverse)
+library(zoo)
+library(broom)
+```
+
+### Reading data
+Then we will need to read in our csv format data files from the local directory into our global environment using the `read_csv()` from the `readr` package.
+
+```{r read_data, message=FALSE}
+# reading in the data for all five documents #
+file_names <- list.files("data/raw")
+
+for (i in seq_along(file_names)) {
+  
+players <- read_csv("data/raw/2018-19_nba_player-statistics.csv")
+team_1 <- read_csv("data/raw/2018-19_nba_team-statistics_1.csv")
+team_2 <- read_csv("data/raw/2018-19_nba_team-statistics_2.csv")
+salary <- read_csv("data/raw/2018-19_nba_player-salaries.csv")
+team_salary <- read_csv("data/raw/2019-20_nba_team-payroll.csv")
+}
+```
+The object labels found within the data have been summarised for the ease in analysis. In order to obtain a full list of the data description, click on the link attached, <https://unicanberra.instructure.com/courses/9531/pages/data-description-reproducible-data-analysis-project>, to access the details
+
+### Checking data
+Once completed, the data is then checked by using the following codes
+
+To check the structure of data file using `str()`:
+
+```{r structure}
+str(players)
+str(team_1)
+str(team_2)
+str(salary)
+str(team_salary)
+```
+
+When checking the first six rows of data using `head()`
+```{r head}
+head(team_1)
+head(team_2)
+head(team_salary)
+head(players)
+head(salary)
+```
+
+To check the last six rows of the data file using `tail()`
+```{r tail}
+tail(team_1)
+tail(team_2)
+tail(team_salary)
+tail(players)
+tail(salary)
+```
+
+We then locate the missing values found in the data from the following:
+```{r na} 
+# counting missing values of each dataset #
+sum(is.na(team_1))
+sum(is.na(team_2))
+sum(is.na(team_salary))
+sum(is.na(players))
+sum(is.na(salary))
+```
+
+Upon checking for NA, we can identify that the NA values in player_stats represent a count of 0 where a player's statistical box score was not present. However, the NA values in the team_stats_1 data frame shows three unidentified columns which were not related to the scores. Therefore, we will be using the `select()` function to eliminate this from our final data:
+```{removing unwanted objects}
+team_1 <- select(team_1, -c(X23, X24, X25))
+```
+
+We look further into the data to ensure that we are conforming with the tidyverse 'tidy' data rule. First we will rename object names that contains any illegal values to begin such as a numerical or % symbol using `rename()`:
+```{r rename}
+
+players <- rename(players, player = `player_name`, FGp = `FG%`, x3P = `3P`, x3PA = `3PA`, x3Pp = `3P%`, x2P = `2P`, x2PA = `2PA`, x2Pp = `2P%`, eFGp = `eFG%`, FTp = `FT%`)
+team_1 <- rename(team_1, rank = `Rk`, x3PAr = `3PAr`, TSp = `TS%`, eFGp = `eFG%`, TOVp = `TOV%`, ORBp = `ORB%`, DRBp = `DRB%`)
+team_2 <- rename(team_2, rank = `Rk`, FGp = `FG%`, x3P = `3P`, x3PA = `3PA`, x3Pp = `3P%`, x2P = `2P`, x2PA = `2PA`, x2Pp = `2P%`, FTp = `FT%`)
+salary <- rename(salary, player = `player_name`)
+```
+
+A new object is then created for us to refer back to our 2018/19 Chicago Bulls roster in order to determine whether we are able to keep certain players within the team for the upcoming 2019/20 season. The `filter()` function is as below:
+```{r filter}
+chi_team <- players %>%
+  group_by(player) %>%
+  filter(Tm == "CHI")
+```
+
+As a result of mid-season player trades, a number of players have duplicated rows within the player_stats data set. In order to clean it up, the data is filtered and summarised to produce a total value of the player's season stat:
+```{sorting out duplicate}
+players <- filter(players, Tm != "TOT")
+
+players <- players %>%
+  group_by(players, Pos) %>%
+  summarise(Age = mean(Age), G = sum(G), GS = sum(GS), MP = sum(MP), FG = sum(FG), FGA = sum(FGA), FGp = round((FG/FGA), 3), x3P = sum(x3P), x3PA = sum(x3PA), x3Pp = round((x3P/x3PA), 3), x2P = sum(x2P), x2PA = sum(x2PA), x2Pp = round((x2P/x2PA), 3), eFGp = (round(((FG + .5 * x3P)/FGA), 3)), FT = sum(FT), FTA = sum(FTA), FTp = round((FT/FTA), 3), ORB = sum(ORB), DRB = sum(DRB), TRB = sum(TRB), AST = sum(AST), STL = sum(STL), BLK = sum(BLK), TOV = sum(TOV), PF = sum(PF), PTS = sum(PTS)) %>%
+  ungroup()
+```
+
+We will then look to join the two team statistical data sets in order to have a 'team_stats_final' data frame for exploratory analysis, this will be done by using `full_join()`
+```{r full_join}
+team_final <- full_join(team_1, team_2, by = c("Team"))
+team_final <- select(team_final, -c(rank.x, rank.y))
+```
+
+### Creating new variables
+In order for us to compare player box score statistics in an unbiased way, we need to create new variables that would not take into account minutes played. This is because, some players may have less minutes played but are in fact very effective scorers for the team. However, due to the teams' roster having more effective players, they may be undervalued. 
+
+```{r mutate pts}
+players <- mutate(players, PTS_per_min = PTS / MP)
+
+players %>%
+  summarise(mn = mean(PTS_per_min, na.rm = TRUE),
+              sd = sd(PTS_per_min, na.rm = TRUE),
+              count = n())
+
+players <- players %>%
+  mutate(PPM_category = if_else(condition = PTS_per_min < 0.4,
+                                true = "below average", false = "above average"))
+```
+
+A new variable to categorize players by their field goal shooting ability is also created for us to easily identify players later. A z score of >= 0 for FG is desirable hence we then categorize each player accordingly
+
+```{r mutate fg}
+players <- players %>%
+  mutate(FG_z = (FG - mean(FG)) / sd(FG),
+         FG_category = if_else(condition = FG_z <0, 
+                               true = "below average", false = "above average"))
+```
+
+Creating a new variable to categorize players by their effectiveness in Rebound rates, firstly we seek out the mean of the total rebound and then categorize the players as above or below average based on the mean.
+
+```{r mutate RB}
+players <- mutate(players, RB_per_game = TRB / G)
+
+players %>%
+  summarise(mn = mean(RB_per_game, na.rm = TRUE),
+            sd = sd(RB_per_game, na.rm = TRUE),
+            count = n())
+
+players <- players %>%
+  mutate(RB_category = if_else(condition = RB_per_game < 3.61, 
+                               true = "below average", false = "above average"))
+```
+
+Creating a new variable to categorize players based on their effectiveness in generating TurnOvers, firstly we seek out the mean of the total
+
+```{r TOV}
+players <- mutate(players, TOV_per_game = TOV / G)
+
+players %>%
+  summarise(mn = mean(TOV_per_game, na.rm = TRUE),
+            sd = sd(TOV_per_game, na.rm = TRUE),
+            count = n())
+
+players <- players %>%
+  mutate(TOV_category = if_else(condition = TOV_per_game < 1.06,
+                                true = "below average", false = "above average"))
+```
+
+Creating a new variable to categorize players based on their effectiveness in generating Assists, we will first seek out the mean of the total
+
+```{r mutate AST}
+players <- players %>%
+  mutate(AST_per_game = AST / G)
+
+players %>%
+  summarise(mn = mean(AST_per_game, na.rm = TRUE),
+            sd = sd(AST_per_game, na.rm = TRUE),
+            count = n())
+
+players <- players %>%
+  mutate(AST_category = if_else(condition = AST_per_game < 2,
+                                true = "below average", false = "above average"))
+```
+
+Generating more per_game box score statistics for players to assist with analysis
+
+```{r boxscores}
+players <- players %>%
+  mutate(FG_per_game = FG / G,
+         x3P_per_game = x3P / G,
+         x2P_per_game = x2P / G,
+         FT_per_game = FT / G,
+         PTS_per_game = PTS / G)
+```
+
+## Exploratory Analysis
+
+### Metrics for a Winning Team Formula
+In a paper published by Kubatko et. al., a breakdown of box score statistics were shown to determine the relationship of each variable to the success of a team. In conclusion, the idea of possession being the central concept to winning games were used to compare against other metrics. However, a later study conducted by Mikołajec et al. determined that a heavier lean to offensive ratings have proven to indicate performance success in NBA teams. 
+
+Therefore, it was decided that in order to anticipate the outcome of a teams' success, the offensive variables have been explored within this analysis. Mainly around the relationship of the offensive ratings and wins for a team as well as the individual variables that directly contributes to the offensive ratings. 
+*Teramoto, M and Cross, C stated that the **Four Factors** which breakdowns a teams' overall efficiency ratings are as follows: 
+  a) eFG%
+  b) TOV%
+  c) RB%
+  d) FT*
+
+### Plotting graphs to examine the relationship between variables
+The following string of line shows the plots that we are creating using the `ggplot()` function to assess the four variables of FG_per_game, RB_per_game, TOV_per_game and FT_per_game to the success of PTS_per_game.
+
+```{r ggplot fg}
+lm_fg <- ggplot(players, aes(x = FG_per_game, y = PTS_per_game)) + 
+  geom_point(alpha = 0.5, colour = "magenta") +
+  geom_smooth(method = "lm", se = FALSE)
+lm_fg
+```
+
+Examining the other three variables, TOV, RB, FT against PTS_per_game
+
+```{r ggplot rb}
+lm_rb <- ggplot(players, aes(x = RB_per_game, y = PTS_per_game)) + 
+  geom_point(alpha = 0.5, colour = "magenta") +
+  geom_smooth(method = "lm", se = FALSE)
+lm_rb
+```
+
+```{r ggplot TOV}
+lm_tov <- ggplot(players, aes(x = TOV_per_game, y = PTS_per_game)) + 
+  geom_point(alpha = 0.5, colour = "magenta") +
+  geom_smooth(method = "lm", se = FALSE)
+lm_tov
+```
+
+```{r ggplot FT}
+lm_ft <- ggplot(players, aes(x = FT_per_game, y = PTS_per_game)) + 
+  geom_point(alpha = 0.5, colour = "magenta") +
+  geom_smooth(method = "lm", se = FALSE)
+lm_ft
+```
+
+From here, we look to assess the relationship of the variables using the multiple linear regression model. We can start by running linear model calculation using the `lm()` function. We then assess the slope coefficients of each value according to the output. 
+
+```{r lm}
+fit <- lm(PTS_per_game ~ FG_per_game + FT_per_game + RB_per_game + TOV_per_game, data = players)
+summary(fit)
+
+# The summary shows us that we have a multiple squared value of 0.9917 which indicates a strong relationship between the independent and the response variable. Suggesting that our model fits well within the data. 
+```
+We then look to determine the slope coefficients of each value according to the output of the data by utilizing the `fit()` model. This allows us to determine the change in response variable when a particular independent variable changes and the rest is kept constant. 
+
+```{f tidy}
+tidy(fit, conf.int = TRUE)
+```
+We can see that the intercept value is 0.316, suggesting that when no FG, FT, RB or TOV is scored, a player still scores 0.316 of a points which is highly unlikely seeing as a single basket accounts to a point in basketball. But when looking at the slope coefficient of each independent variable value, we can determine the following
+
+  1. When a player increases their FG_per_game value by 1, they score 2.4 more points than the average player
+  2. When a player increases their FT_per_game value by 1, they score 0.92 more points that the average player
+  3. When a player increases their RB_per_game value by 1, they do not necessarily score more points with a -0.16 value shown
+  4. When a player increases their TOV_per_game value by 1, they do not necessarily score more points with a -0.02 value shown
+
+Results of the slope coefficient indicates that although the *Four Factors* of the game states that rebounds and turnovers contributes to a better efficiency rating for a team, it does not necessarily mean that a player will increase their scoring percentages per game. 
+
+### Detecting outliers and plotting it to a graph `rstandard()`
+```{r rstandard}
+std_res <- rstandard(fit)
+points <- 1:length(std_res)
+
+res_labels <- if_else(abs(std_res) >= 2, paste(points), "")
+ggplot(data = NULL, aes(x = points, y = std_res)) +
+  geom_point() +
+  geom_text(aes(label = res_labels), nudge_y = 0.2, nudge_x = 0.5) +
+  ylim(c(-4,4)) +
+  geom_hline(yintercept = c(-3,3), colour = "red", linetype = "dashed")
+```
+
+### Plotting hat values using `hatvalue()`
+```{r hat}
+hats <- hatvalues(fit)
+
+hat_labels <- if_else(hats >=0.05, paste(points), "")
+ggplot(data = NULL, aes(x = points, y = hats)) +
+  geom_point() +
+  geom_text(aes(label = hat_labels), nudge_y = 0.003)
+```
+
+### Examining the influence when an ith data point is removed in order to fit the model using `cooks.distance()`
+```{r cooks}
+cook <- cooks.distance(fit)
+
+cook_labels <- if_else(cook >= 0.1, paste(points), "")
+ggplot(data = NULL, aes(x = points, y = cook)) +
+  geom_point() +
+  geom_text(aes(label = cook_labels), nudge_y = 0.02)
+```
+
+### Testing for the independence of observations using `car::durbinWatsonTest()`
+```{r durbinWatsonTest}
+car::durbinWatsonTest(fit)
+# With a value of 1.9 it shows that there is no correlation between residuals in our measures
+```
+
+### Examining homoscedasticity 
+We perform a test in our data to demonstrate that there is a constant variance across all our values based on the x variable by using this method
+```{r homoscedasticity}
+res <- residuals(fit)
+fitted <- predict(fit)
+
+# Plotting the values to visualise the data
+ggplot(data = NULL, aes(x = fitted, y = res)) +
+  geom_point(colour = "green4") +
+  geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
+```
+Considering the data that has been plotted, we can verify the assumption that the randomness in the pattern in fact states that there is homoscedasticity within the data. 
+
+We next examine the distribution of the data using the plot below.
+```{r normal distribution}
+ggplot(data = NULL, aes(x = res)) +
+  geom_histogram(colour = "darkblue", fill = "green4")
+# Looking at the shape of the data, we can confidently say that our data is normally distributed. 
+```
+
+### Assessing multicollinearity of the variables using the `pairs()` function:
+```{r pairs}
+pairs(formula = ~ FG_per_game + FT_per_game + RB_per_game + TOV_per_game, data = players)
+```
+
+We will also conduct a test to assess for linearity in the data using the avPlots from `car` package
+```{r avPlots}
+car::avPlots(fit)
+```
+
+### Assessing standard error
+Finally, we look to explore the standard error in our data by using the variance inflation factor `vif()` from the cars package
+```{r vif}
+car::vif(fit)
+```
+
+## Creating a new variable for player 
+We can now model an expected points per game scored by our players in the coming season and this will give us an indication of how are players are performing and its effects on the overall team efficiency. Hence we are able to better predict the outcome of our regular season
+```{r mutate}
+players <- mutate(players, exp_PTS = predict(fit, newdata = players))
+```
+
+## Player recommendations
+When looking at the budget that was presented, $112.5 million dollars, it is clear that financially the team will be faced with a challenge to put on a strong roster with star players who have higher box score statistics. However, we will need to consider players who are efficient within their position to fill our starting five and bench roster. In order to do that, we will look to use variables that were previously created to determine which players are best fitted to the team. As a guide, a 17 man roster with the breakdown of players selection will be according to the following: 
+  i) PG - 4
+  ii) SG - 4
+  iii) SF - 3
+  iv) PF - 4
+  v) C - 3
+ 
+Given the versatality and interchangeable positions of the PF and SG, it has been decided that we will take 4 players from each of the position.
+
+Firstly, let's look at including the player salary to their object. We can complete this by using the `right_join()` function:
+```{r right_join}
+players <- salary %>%
+  select(player, salary) %>%
+  right_join(players, by = "player")
+```
+
+We then group the players based on their position by using the `filter()` function:
+```{r filter players by pos}
+## PG
+players_PG <- filter(players, Pos == "PG")
+players_PG
+## SG
+players_SG <- filter(players, Pos == "SG")
+players_SG
+## SF
+players_SF <- filter(players, Pos == "SF")
+players_SF
+## PF
+players_PF <- filter(players, Pos == "PF")
+players_PF
+## C
+players_C <- filter(players, Pos == "C")
+players_C
+```
+
+Finally, we further assess players by using their averages within each position to determine their efficiency. Based on the understanding of each players position, we can identify our main offensive scorers to be in the PG, SG and SF position whilst our main defensive players will be the PF and C. When looking at the *Four Factor* metrics to identify our player, the PF, SG and SF position will be decided based on their PTS_per_game and x3P_per_game along with desirable above average factors in the TOV_category and FG_category. Whilst considering the PF and C position, metrics such as the PTS_per_game, and FT_per_game as their main determinating factor with RB_category and TOV_category desired to be in the above average range in order to determine their efficiency.
+
+We can first plot a graph to find the potential players that we may be searching for through a visualization
+```{r ggplot}
+gg <- players %>%
+  ggplot(aes(x = salary/1000000, y = exp_PTS, colour = Pos)) +
+  geom_point() +
+  xlab("Salary (Millions)")
+```
+
+In order to further assess these traits for our individual athletes by position, we can use the `select()`, `arrange()` and `top_n()` functions to select our top performers by position. A top_n(15) has been used so that we can select players who are still within the top quartile of their position but able to perform off the bench
+```{r select PG}
+players_PG %>%
+  select(player, salary, AST_category, TOV_category, x3P_per_game, exp_PTS) %>%
+  arrange(desc(exp_PTS), salary) %>%
+  top_n(15)
+```
+
+```{r select SG}
+players_SG %>%
+  select(player, salary, AST_category, TOV_category, x3P_per_game, exp_PTS) %>%
+  arrange(desc(exp_PTS), salary) %>%
+  top_n(15)
+```
+
+```{r select SF}
+players_SF %>%
+  select(player, salary, AST_category, TOV_category, x3P_per_game, exp_PTS) %>%
+  arrange(desc(exp_PTS), salary) %>%
+  top_n(15)
+```
+
+Selecting BIGs based on RB_category, TOV_category, FT_per_game and PTS_per_game
+
+```{r select PF}
+players_PF %>%
+  select(player, salary, RB_category, TOV_category, FT_per_game, exp_PTS) %>%
+  arrange(desc(exp_PTS), salary) %>%
+  top_n(15)
+```
+
+```{r select C}
+players_C %>%
+  select(player, salary, RB_category, TOV_category, FT_per_game, exp_PTS) %>%
+  arrange(desc(exp_PTS), salary) %>%
+  top_n(15)
+```
+
+# Five Starters for the Team
+Based on the calculations made above, it is to the best of my knowledge that in order to win a game, we will require our players in the PG, SG and SF to be able to score most of our points on top of having the ability to create opportunities for their teammates to score. Whilst on a defensive end, we require our *BIGs* (PF, C) to be able to have above average attributes in the rebound and turnover portion of the game. These along with having a higher FT_per_game and exp_PTS allows us to create a team that is not only versatile on the offense end but also on the defensive end. 
+
+Henceforth, our starting players will be the following:
+
+  PG - Kemba Walker $12m; 
+  
+  SG - Devin Booker $3.3m
+  
+  SF - Kahwi Leonard $23m
+  
+  PF - Julius Randle $8.6m
+  
+  C - Karl-Anthony Towns $7.8m
+  
+Our bench will consist of the following players in their respective positions
+  
+  PG - D'Angelo Russell $7m
+  
+  PG - Derrick Rose $2.2m
+  
+  PG - Jamal Murray $3.5m
+  
+  SG - Donovan Mitchell $3.1m
+  
+  SG - Luka Doncic $6.6m
+  
+  SG - Buddy Hield $3.8m
+  
+  SF - Brandon Ingram $5.8m
+  
+  SF - Jayson Tatum $6.7m
+  
+  PF - John Collins $2.3m
+  
+  PF - Kyle Kuzma $1.7m
+  
+  PF - Pascal Siakam $1.5m
+  
+  C - Montrezl Harrell $6m
+  
+  C - Demarcus Cousins $5.3m
+
+The total team salary brings us to $110m. This is lower than the current team budget which allows us to have money to spend in the mid season trade should we require to strengthen our roster. 
+
+# Summary
+In conclusion, the traits that defines the success of a team in the NBA within the regular season can be determined by what is called their nett efficiency rating. Teams that generally perform well and progress to the post season possess both a good offensive rating and a good defensive rating. (4) Moreover, these efficiency ratings can be broken down into a handful of individual box score statistics which are field goals, turnovers, rebounds and free throws. (2, 4)
+
+Although the multiple linear regression model has been used to evaluate these variables, limitations were found where by a higher than desired value of standard error was present when FG_per_game was compared to that of the PTS_per_game. This suggests that there is no multicolinearity of FG_per_games with the other variables Further investigation is required to assess and generate a more robust prediction model for the teams by using a wider range of data from previous years. By doing so, we will be able to provide a more accurate outcome that will allow us to build a better team with higher nett efficiency ratings.
+
+
+
+## References
+1.	Elmore R. Predicting Which Teams Will Make the NBA Playoffs. Available at SSRN 2764482. 2016.
+2.	Teramoto M, Cross CL. Relative importance of performance factors in winning NBA games in regular season versus playoffs. Journal of Quantitative Analysis in Sports. 2010;6(3).
+3.	ESPN. NBA Standings 2018-19: espn.com.au; 2019 [cited 2021 5th May]. Available from: https://www.espn.com.au/nba/table/_/season/2019.
+4.	Kubatko J, Oliver D, Pelton K, Rosenbaum DT. A starting point for analyzing basketball statistics. Journal of quantitative analysis in sports. 2007;3(3).
+5.	Rangel W, Ugrinowitsch C, Lamas L. Basketball players' versatility: Assessing the diversity of tactical roles. International Journal of Sports Science & Coaching. 2019;14(4):552-61.
+6.  Mikołajec K, Maszczyk A, Zając T. Game indicators determining sports performance in the NBA. Journal of human kinetics. 2013;37:145.
